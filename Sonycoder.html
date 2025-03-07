@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SonyCoder - محرر الأكواد</title>
+
+    <!-- مكتبة CodeMirror -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+
+    <style>
+        /* تغيير الألوان إلى الأبيض والأزرق */
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            background: #ffffff; /* خلفية بيضاء */
+            color: #333; /* لون النص أسود رمادي */
+            margin: 0; 
+            overflow-x: hidden; 
+            font-size: 18px; 
+        }
+
+        /* تحسين القائمة */
+        .menu {
+            background: linear-gradient(90deg, #007bff, #0056b3); /* درجات الأزرق */
+            padding: 15px; 
+            text-align: left; 
+            position: fixed; 
+            width: 100%; 
+            top: 0; 
+            left: -100%; 
+            transition: left 0.5s ease-in-out; 
+        }
+
+        /* تحريك القائمة عند تحميل الصفحة */
+        body.loaded .menu { left: 0; }
+
+        /* تحسين الأزرار */
+        .menu button, .menu select {
+            background: #007bff; /* أزرق فاتح */
+            color: white;
+            border: 2px solid #0056b3; 
+            padding: 15px; 
+            margin: 5px; 
+            cursor: pointer; 
+            font-size: 18px;
+            border-radius: 10px;
+            transition: transform 0.2s, background 0.3s;
+        }
+
+        /* تأثير عند تمرير الماوس */
+        .menu button:hover {
+            transform: scale(1.1);
+            background: #0056b3; /* أزرق داكن أكثر */
+        }
+
+        /* تحسين المحرر */
+        #editor { 
+            width: 90%; 
+            height: 400px; 
+            border: 2px solid #0056b3; 
+            margin: 80px auto 10px; 
+            transition: box-shadow 0.3s ease-in-out; 
+            font-size: 20px; 
+            background: #f8f9fa; /* خلفية فاتحة */
+            color: #333; /* لون النص داكن */
+        }
+
+        #editor:focus { 
+            box-shadow: 0 0 15px #007bff; 
+        }
+
+        /* تحسين المخرجات */
+        .output-box {
+            background: #e9ecef; /* لون رمادي فاتح */
+            color: #333; /* لون داكن */
+            padding: 15px; 
+            border-radius: 10px; 
+            min-height: 120px; 
+            text-align: left; 
+            font-size: 18px;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        /* تأثير عند عرض النتائج */
+        .output-box.show { transform: scale(1.05); }
+    </style>
+</head>
+<body class="loaded">
+
+    <div class="menu">
+        <button onclick="runCode()">▶ تشغيل</button>
+        <button onclick="saveFile()">💾 حفظ كـ ملف</button>
+        <button onclick="newFile()">📄 ملف جديد</button>
+        <button onclick="toggleFullScreen()">⛶ ملء الشاشة</button>
+        <button onclick="clearEditor()">🗑 مسح</button>
+        
+        <select id="language" onchange="changeLanguage()">
+            <option value="javascript">JavaScript</option>
+            <option value="python">Python</option>
+            <option value="htmlmixed">HTML/CSS</option>
+            <option value="clike">C/C++</option>
+            <option value="java">Java</option>
+            <option value="php">PHP</option>
+        </select>
+    </div>
+
+    <textarea id="editor"></textarea>
+
+    <h3>🔹 المخرجات:</h3>
+    <pre class="output-box" id="output"></pre>
+
+    <script>
+        let editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
+            mode: "javascript",
+            theme: "default",
+            lineNumbers: true,
+            autoCloseBrackets: true,
+            fontSize: "20px"
+        });
+
+        function changeLanguage() {
+            let lang = document.getElementById("language").value;
+            let mode = {
+                "javascript": "javascript",
+                "python": "python",
+                "htmlmixed": "htmlmixed",
+                "clike": "text/x-c++src",
+                "java": "text/x-java",
+                "php": "application/x-httpd-php"
+            }[lang];
+            editor.setOption("mode", mode);
+        }
+
+        function runCode() {
+            let code = editor.getValue();
+            let lang = document.getElementById("language").value;
+            let outputBox = document.getElementById("output");
+
+            if (lang === "javascript") {
+                try {
+                    let result = eval(code);
+                    outputBox.innerText = result;
+                } catch (e) {
+                    outputBox.innerText = "⚠ خطأ: " + e.message;
+                }
+            } else {
+                alert("✅ سيتم تنفيذ الكود أونلاين لاحقًا.");
+            }
+
+            outputBox.classList.add("show");
+            setTimeout(() => outputBox.classList.remove("show"), 300);
+        }
+
+        function saveFile() {
+            let code = editor.getValue();
+            let lang = document.getElementById("language").value;
+            let extension = {
+                "javascript": ".js",
+                "python": ".py",
+                "htmlmixed": ".html",
+                "clike": ".cpp",
+                "java": ".java",
+                "php": ".php"
+            }[lang];
+
+            let fileName = prompt("📂 أدخل اسم الملف (بدون الامتداد):");
+            if (!fileName) return;
+
+            let blob = new Blob([code], { type: "text/plain" });
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName + extension;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function newFile() {
+            let confirmNew = confirm("⚠ هل تريد إنشاء ملف جديد؟ سيتم مسح كل الأكواد الحالية.");
+            if (confirmNew) {
+                editor.setValue("");
+                alert("📄 تم إنشاء ملف جديد!");
+            }
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        function clearEditor() {
+            editor.setValue("");
+            document.getElementById("output").innerText = "";
+        }
+
+        window.onload = function() {
+            document.body.classList.add("loaded");
+        };
+    </script>
+
+</body>
+</html>
